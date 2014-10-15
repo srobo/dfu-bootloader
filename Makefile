@@ -53,4 +53,4 @@ debug: usb_dfu.elf
 	$(GDB)  $^ -ex "target remote localhost:3333" -ex "mon reset halt" && killall openocd
 
 clean:
-	-rm -f usb_dfu.elf depend *.o
+	-rm -f usb_dfu.elf depend *.o *.map
