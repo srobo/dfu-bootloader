@@ -26,7 +26,7 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dfu.h>
 
-#define APP_ADDRESS	0x08002000
+#define APP_ADDRESS	0x08002001
 
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR	0x21
