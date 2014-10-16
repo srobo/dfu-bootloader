@@ -255,15 +255,24 @@ int main(void)
 
 	if (!force_bootloader()) {
 		/* Boot the application if it's valid. */
+		/* XXX jmorse - disabled everything but the call to the app. */
+		/* It looks like this expects the first uint32_t to be a stack
+		 * address, which is fine, but also assigns SCB_VTOR, which is
+		 * not (AFAIK). We're fine having the top of the call stack
+		 * having a bootloader frame in it, so just ignore these bits*/
+#if 0
 		if ((*(volatile uint32_t *)APP_ADDRESS & 0x2FFE0000) == 0x20000000) {
 			/* Set vector table base address. */
 			SCB_VTOR = APP_ADDRESS & 0xFFFF;
 			/* Initialise master stack pointer. */
 			asm volatile("msr msp, %0"::"g"
 				     (*(volatile uint32_t *)APP_ADDRESS));
+#endif
 			/* Jump to application. */
-			(*(void (**)())(APP_ADDRESS + 4))();
+			(*(void (**)())(APP_ADDRESS))(); // originally APP+4
+#if 0
 		}
+#endif
 	}
 
 	rcc_clock_setup_in_hsi_out_48mhz();
