@@ -24,7 +24,8 @@ all: usb_dfu.bin
 include depend
 
 usb_dfu.elf: $(O_FILES) $(LD_SCRIPT)
-	$(LD) -o $@ $(O_FILES) $(LDFLAGS) -lopencm3_stm32f1
+	if test -z "$$FORCE_BOOTLOADER_OBJ"; then echo "No force_bootloader object provided in environment" 1>&2; exit 1; fi
+	$(LD) -o $@ $(O_FILES) $$FORCE_BOOTLOADER_OBJ $(LDFLAGS) -lopencm3_stm32f1
 	$(SIZE) $@
 
 %.bin: %.elf
