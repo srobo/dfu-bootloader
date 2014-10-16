@@ -245,67 +245,10 @@ static void set_config_cb(usbd_device *usbd_dev, uint16_t wValue)
 				usbdfu_control_request);
 }
 
-static bool force_bootloader(void)
-{
-	/* Assume that the TX and RX pins are shorted, check otherwise */
-	bool enter_bootloader = true;
-
-	rcc_periph_clock_enable(RCC_GPIOA);
-	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ,
-	              GPIO_CNF_OUTPUT_PUSHPULL, GPIO9);
-	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
-	              GPIO_CNF_INPUT_PULL_UPDOWN, GPIO10);
-
-	/* Pull down */
-	gpio_clear(GPIOA, GPIO10);
-	
-	gpio_clear(GPIOA, GPIO9);
-	delay(10);
-	if (gpio_get(GPIOA, GPIO10))
-	{
-		enter_bootloader = false;
-		goto cleanup;
-	}
-
-	gpio_set(GPIOA, GPIO9);
-	delay(10);
-	if (!gpio_get(GPIOA, GPIO10))
-	{
-		enter_bootloader = false;
-		goto cleanup;
-	}
-
-	/* Pull up */
-	gpio_set(GPIOA, GPIO10);
-
-	gpio_clear(GPIOA, GPIO9);
-	delay(10);
-	if (gpio_get(GPIOA, GPIO10))
-	{
-		enter_bootloader = false;
-		goto cleanup;
-	}
-
-	gpio_set(GPIOA, GPIO9);
-	delay(10);
-	if (!gpio_get(GPIOA, GPIO10))
-	{
-		enter_bootloader = false;
-		goto cleanup;
-	}
-	
-
-cleanup:
-	/* Set pins back to default */
-	gpio_clear(GPIOA, GPIO9);
-	gpio_clear(GPIOA, GPIO10);
-	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
-	              GPIO_CNF_INPUT_FLOAT, GPIO9);
-	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
-	              GPIO_CNF_INPUT_FLOAT, GPIO10);
-
-	return enter_bootloader;
-}
+/* Expect outside environment to have built and linked in a force_bootloader
+ * function. This means this bootloader is not device independent. This is a
+ * feature. */
+extern bool force_bootloader();
 
 int main(void)
 {
