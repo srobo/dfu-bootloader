@@ -4,6 +4,7 @@ LD = $(PREFIX)-gcc
 SIZE = $(PREFIX)-size
 GDB = $(PREFIX)-gdb
 OBJCOPY = $(PREFIX)-objcopy
+STRIP = $(PREFIX)-strip
 OOCD = openocd
 
 LDSCRIPT = stm32.ld
@@ -19,9 +20,14 @@ LDFLAGS += -lc -lm -Llibopencm3/lib \
 
 O_FILES = usbdfu.o boot.o
 
-all: usb_dfu.bin
+all: usb_dfu_blob.o usb_dfu.bin
 
 include depend
+
+usb_dfu_blob.o: $(O_FILES) $(LD_SCRIPT)
+	if test -z "$$FORCE_BOOTLOADER_OBJ"; then echo "No force_bootloader object provided in environment" 1>&2; exit 1; fi
+	$(LD) -o $@ $(O_FILES) $$FORCE_BOOTLOADER_OBJ $(LDFLAGS) -lopencm3_stm32f1 '-Wl,-r,-e reset_handler'
+	$(STRIP) $@
 
 usb_dfu.elf: $(O_FILES) $(LD_SCRIPT)
 	if test -z "$$FORCE_BOOTLOADER_OBJ"; then echo "No force_bootloader object provided in environment" 1>&2; exit 1; fi
