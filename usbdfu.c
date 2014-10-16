@@ -44,7 +44,6 @@ static enum dfu_state usbdfu_state = STATE_DFU_IDLE;
 static struct {
 	uint8_t buf[sizeof(usbd_control_buffer)];
 	uint16_t len;
-	uint32_t addr;
 	uint16_t blocknum;
 } prog;
 
@@ -71,7 +70,7 @@ const struct usb_dfu_descriptor dfu_function = {
 	.bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_WILL_DETACH,
 	.wDetachTimeout = 255,
 	.wTransferSize = 1024,
-	.bcdDFUVersion = 0x011A,
+	.bcdDFUVersion = 0x01,
 };
 
 const struct usb_interface_descriptor iface = {
@@ -115,7 +114,7 @@ static const char *usb_strings[] = {
 	"DFU Demo",
 	"DEMO",
 	/* This string is used by ST Microelectronics' DfuSe utility. */
-	"@Internal Flash   /0x08000000/8*001Ka,56*001Kg",
+	"uwotm8",
 };
 
 static uint8_t usbdfu_getstatus(usbd_device *usbd_dev, uint32_t *bwPollTimeout)
@@ -145,27 +144,15 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
 	switch (usbdfu_state) {
 	case STATE_DFU_DNBUSY:
 		flash_unlock();
-		if (prog.blocknum == 0) {
-			switch (prog.buf[0]) {
-			case CMD_ERASE:
-				{
-					uint32_t *dat = (uint32_t *)(prog.buf + 1);
-					flash_erase_page(*dat);
-				}
-			case CMD_SETADDR:
-				{
-					uint32_t *dat = (uint32_t *)(prog.buf + 1);
-					prog.addr = *dat;
-				}
-			}
-		} else {
-			uint32_t baseaddr = prog.addr + ((prog.blocknum - 2) *
-				       dfu_function.wTransferSize);
-			for (i = 0; i < prog.len; i += 2) {
-				uint16_t *dat = (uint16_t *)(prog.buf + i);
-				flash_program_half_word(baseaddr + i,
-						*dat);
-			}
+		// XXX jmorse -- this is all on the presumption that we never
+		// get a short write.
+		uint32_t baseaddr = 0x08002000 + ((prog.blocknum) *
+			       dfu_function.wTransferSize);
+		flash_erase_page(baseaddr);
+		for (i = 0; i < prog.len; i += 2) {
+			uint16_t *dat = (uint16_t *)(prog.buf + i);
+			flash_program_half_word(baseaddr + i,
+					*dat);
 		}
 		flash_lock();
 
