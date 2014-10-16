@@ -17,7 +17,7 @@ LDFLAGS += -lc -lm -Llibopencm3/lib \
 	   -nostartfiles -Wl,--gc-sections,-Map=dfu.map -mcpu=cortex-m3 \
 	   -mthumb -march=armv7-m -mfix-cortex-m3-ldrd -msoft-float
 
-O_FILES = usbdfu.o
+O_FILES = usbdfu.o boot.o
 
 all: usb_dfu.bin
 

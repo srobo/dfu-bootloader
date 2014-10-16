@@ -19,14 +19,10 @@
 
 #include <string.h>
 #include <stdbool.h>
-#include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/flash.h>
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dfu.h>
-
-#define APP_ADDRESS	0x08002000
 
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR	0x21
@@ -37,18 +33,18 @@
                     } while(0)
 
 /* We need a special large control buffer for this device: */
-uint8_t usbd_control_buffer[1024];
+uint8_t usbdfu_control_buffer[1024];
 
 static enum dfu_state usbdfu_state = STATE_DFU_IDLE;
 
 static struct {
-	uint8_t buf[sizeof(usbd_control_buffer)];
+	uint8_t buf[sizeof(usbdfu_control_buffer)];
 	uint16_t len;
 	uint32_t addr;
 	uint16_t blocknum;
 } prog;
 
-const struct usb_device_descriptor dev = {
+const struct usb_device_descriptor usbdfu_dev = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
 	.bcdUSB = 0x0200,
@@ -97,7 +93,7 @@ const struct usb_interface ifaces[] = {{
 	.altsetting = &iface,
 }};
 
-const struct usb_config_descriptor config = {
+const struct usb_config_descriptor usbdfu_config = {
 	.bLength = USB_DT_CONFIGURATION_SIZE,
 	.bDescriptorType = USB_DT_CONFIGURATION,
 	.wTotalLength = 0,
@@ -110,7 +106,7 @@ const struct usb_config_descriptor config = {
 	.interface = ifaces,
 };
 
-static const char *usb_strings[] = {
+const char *usbdfu_strings[] = {
 	"Black Sphere Technologies",
 	"DFU Demo",
 	"DEMO",
@@ -181,7 +177,7 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
 	}
 }
 
-static int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf,
+int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf,
 		uint16_t *len, void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
 {
 	if ((req->bmRequestType & 0x7F) != 0x21)
@@ -232,50 +228,4 @@ static int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *
 	}
 
 	return 0;
-}
-
-
-static void set_config_cb(usbd_device *usbd_dev, uint16_t wValue)
-{
-
-	usbd_register_control_callback(
-				usbd_dev,
-				USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
-				USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
-				usbdfu_control_request);
-}
-
-/* Expect outside environment to have built and linked in a force_bootloader
- * function. This means this bootloader is not device independent. This is a
- * feature. */
-extern bool force_bootloader();
-
-int main(void)
-{
-	usbd_device *usbd_dev;
-
-	rcc_periph_clock_enable(RCC_GPIOA);
-
-	if (!force_bootloader()) {
-		/* XXX jmorse: skip configuring the stack location. It doesn't
-		 * harm us to have the remains of the bootloader at thet top.
-		 * Keep the configuration of the interrupt vectors though */
-		/* Set vector table base address. */
-		SCB_VTOR = *(volatile uint32_t*)APP_ADDRESS;
-		/* Jump to application. */
-		(*(void (**)())(APP_ADDRESS + 4))();
-	}
-
-	rcc_clock_setup_in_hsi_out_48mhz();
-
-	gpio_clear(GPIOA, GPIO8);
-	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-		      GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
-
-	usbd_dev = usbd_init(&stm32f103_usb_driver, &dev, &config, usb_strings, 4, usbd_control_buffer, sizeof(usbd_control_buffer));
-	usbd_register_set_config_callback(usbd_dev, set_config_cb);
-	gpio_set(GPIOA, GPIO8);
-
-	while (1)
-		usbd_poll(usbd_dev);
 }
