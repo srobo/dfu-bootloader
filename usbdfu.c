@@ -257,16 +257,13 @@ int main(void)
 	rcc_periph_clock_enable(RCC_GPIOA);
 
 	if (!force_bootloader()) {
-		/* Boot the application if it's valid. */
-		if ((*(volatile uint32_t *)APP_ADDRESS & 0x2FFE0000) == 0x20000000) {
-			/* Set vector table base address. */
-			SCB_VTOR = APP_ADDRESS & 0xFFFF;
-			/* Initialise master stack pointer. */
-			asm volatile("msr msp, %0"::"g"
-				     (*(volatile uint32_t *)APP_ADDRESS));
-			/* Jump to application. */
-			(*(void (**)())(APP_ADDRESS + 4))();
-		}
+		/* XXX jmorse: skip configuring the stack location. It doesn't
+		 * harm us to have the remains of the bootloader at thet top.
+		 * Keep the configuration of the interrupt vectors though */
+		/* Set vector table base address. */
+		SCB_VTOR = *(volatile uint32_t*)APP_ADDRESS;
+		/* Jump to application. */
+		(*(void (**)())(APP_ADDRESS + 4))();
 	}
 
 	rcc_clock_setup_in_hsi_out_48mhz();
