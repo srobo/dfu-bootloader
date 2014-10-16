@@ -44,6 +44,7 @@ static enum dfu_state usbdfu_state = STATE_DFU_IDLE;
 static struct {
 	uint8_t buf[sizeof(usbd_control_buffer)];
 	uint16_t len;
+	uint32_t addr;
 	uint16_t blocknum;
 } prog;
 
@@ -70,7 +71,7 @@ const struct usb_dfu_descriptor dfu_function = {
 	.bmAttributes = USB_DFU_CAN_DOWNLOAD | USB_DFU_WILL_DETACH,
 	.wDetachTimeout = 255,
 	.wTransferSize = 1024,
-	.bcdDFUVersion = 0x01,
+	.bcdDFUVersion = 0x011A,
 };
 
 const struct usb_interface_descriptor iface = {
@@ -109,12 +110,12 @@ const struct usb_config_descriptor config = {
 	.interface = ifaces,
 };
 
-static const char * const usb_strings[] = {
+static const char *usb_strings[] = {
 	"Black Sphere Technologies",
 	"DFU Demo",
 	"DEMO",
 	/* This string is used by ST Microelectronics' DfuSe utility. */
-	"uwotm8",
+	"@Internal Flash   /0x08000000/8*001Ka,56*001Kg",
 };
 
 static uint8_t usbdfu_getstatus(usbd_device *usbd_dev, uint32_t *bwPollTimeout)
@@ -144,15 +145,27 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
 	switch (usbdfu_state) {
 	case STATE_DFU_DNBUSY:
 		flash_unlock();
-		// XXX jmorse -- this is all on the presumption that we never
-		// get a short write.
-		uint32_t baseaddr = 0x08002000 + ((prog.blocknum) *
-			       dfu_function.wTransferSize);
-		flash_erase_page(baseaddr);
-		for (i = 0; i < prog.len; i += 2) {
-			uint16_t *dat = (uint16_t *)(prog.buf + i);
-			flash_program_half_word(baseaddr + i,
-					*dat);
+		if (prog.blocknum == 0) {
+			switch (prog.buf[0]) {
+			case CMD_ERASE:
+				{
+					uint32_t *dat = (uint32_t *)(prog.buf + 1);
+					flash_erase_page(*dat);
+				}
+			case CMD_SETADDR:
+				{
+					uint32_t *dat = (uint32_t *)(prog.buf + 1);
+					prog.addr = *dat;
+				}
+			}
+		} else {
+			uint32_t baseaddr = prog.addr + ((prog.blocknum - 2) *
+				       dfu_function.wTransferSize);
+			for (i = 0; i < prog.len; i += 2) {
+				uint16_t *dat = (uint16_t *)(prog.buf + i);
+				flash_program_half_word(baseaddr + i,
+						*dat);
+			}
 		}
 		flash_lock();
 
@@ -232,36 +245,85 @@ static void set_config_cb(usbd_device *usbd_dev, uint16_t wValue)
 				usbdfu_control_request);
 }
 
-extern bool force_bootloader();
+static bool force_bootloader(void)
+{
+	/* Assume that the TX and RX pins are shorted, check otherwise */
+	bool enter_bootloader = true;
+
+	rcc_periph_clock_enable(RCC_GPIOA);
+	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ,
+	              GPIO_CNF_OUTPUT_PUSHPULL, GPIO9);
+	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+	              GPIO_CNF_INPUT_PULL_UPDOWN, GPIO10);
+
+	/* Pull down */
+	gpio_clear(GPIOA, GPIO10);
+	
+	gpio_clear(GPIOA, GPIO9);
+	delay(10);
+	if (gpio_get(GPIOA, GPIO10))
+	{
+		enter_bootloader = false;
+		goto cleanup;
+	}
+
+	gpio_set(GPIOA, GPIO9);
+	delay(10);
+	if (!gpio_get(GPIOA, GPIO10))
+	{
+		enter_bootloader = false;
+		goto cleanup;
+	}
+
+	/* Pull up */
+	gpio_set(GPIOA, GPIO10);
+
+	gpio_clear(GPIOA, GPIO9);
+	delay(10);
+	if (gpio_get(GPIOA, GPIO10))
+	{
+		enter_bootloader = false;
+		goto cleanup;
+	}
+
+	gpio_set(GPIOA, GPIO9);
+	delay(10);
+	if (!gpio_get(GPIOA, GPIO10))
+	{
+		enter_bootloader = false;
+		goto cleanup;
+	}
+	
+
+cleanup:
+	/* Set pins back to default */
+	gpio_clear(GPIOA, GPIO9);
+	gpio_clear(GPIOA, GPIO10);
+	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+	              GPIO_CNF_INPUT_FLOAT, GPIO9);
+	gpio_set_mode(GPIOA, GPIO_MODE_INPUT,
+	              GPIO_CNF_INPUT_FLOAT, GPIO10);
+
+	return enter_bootloader;
+}
 
 int main(void)
 {
 	usbd_device *usbd_dev;
 
-	usbdfu_state = STATE_DFU_IDLE; // Can't trust .data
-
 	rcc_periph_clock_enable(RCC_GPIOA);
 
 	if (!force_bootloader()) {
 		/* Boot the application if it's valid. */
-		/* XXX jmorse - disabled everything but the call to the app. */
-		/* It looks like this expects the first uint32_t to be a stack
-		 * address, which is fine, but also assigns SCB_VTOR, which is
-		 * not (AFAIK). We're fine having the top of the call stack
-		 * having a bootloader frame in it, so just ignore these bits*/
-#if 0
 		if ((*(volatile uint32_t *)APP_ADDRESS & 0x2FFE0000) == 0x20000000) {
 			/* Set vector table base address. */
 			SCB_VTOR = APP_ADDRESS & 0xFFFF;
 			/* Initialise master stack pointer. */
 			asm volatile("msr msp, %0"::"g"
 				     (*(volatile uint32_t *)APP_ADDRESS));
-#endif
 			/* Jump to application. */
-			(*(void (**)())(APP_ADDRESS))(); // originally APP+4
-#if 0
+			(*(void (**)())(APP_ADDRESS + 4))();
 		}
-#endif
 	}
 
 	rcc_clock_setup_in_hsi_out_48mhz();
