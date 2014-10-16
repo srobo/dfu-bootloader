@@ -238,6 +238,8 @@ int main(void)
 {
 	usbd_device *usbd_dev;
 
+	usbdfu_state = STATE_DFU_IDLE; // Can't trust .data
+
 	rcc_periph_clock_enable(RCC_GPIOA);
 
 	if (!force_bootloader()) {
