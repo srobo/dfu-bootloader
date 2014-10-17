@@ -220,5 +220,7 @@ void usbdfu_sanitise()
 	// init variables in .data; For whatever reason they're not getting
 	// initialized correctly?
 	usbdfu_state = STATE_DFU_IDLE;
+	memset(&usbdfu_control_buffer, 0, sizeof(usbdfu_control_buffer));
+	memset(&prog, 0, sizeof(prog));
 	return;
 }
