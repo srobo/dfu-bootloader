@@ -39,6 +39,27 @@ void do_bootloader()
 		usbd_poll(usbd_dev);
 }
 
+void re_enter_bootloader()
+{
+	// This entire thing is every so slightly dodgy. We can trust:
+	//  * The bootloader code in this project hasn't been rewritten
+	//  * All the linking inside the bootloader
+	//  * All the RO data here
+	// But not any data in sram, i.e. .bss and .data. This is /mostly/ fine,
+	// but we reset our own variables with usbdfu_sanitise.
+	//
+	// It's funkier for libopencm3. There are only two pieces of data that
+	// might prove troublesome: some rcc frequency counters, and the USB
+	// device record which is normally in .bss. We can't trust either as
+	// their addresses and data will have changed in the application.
+	//
+	// However: the USB driver code is always (apparently) overwritten and
+	// initialized by libopencm3. And in the worst case, the rcc vars are
+	// not static.
+	usbdfu_sanitise();
+	do_bootloader();
+}
+
 /* Expect outside environment to have built and linked in a force_bootloader
  * function. This means this bootloader is not device independent. This is a
  * feature. */
