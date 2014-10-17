@@ -10,9 +10,23 @@ OOCD = openocd
 LDSCRIPT = stm32.ld
 OOCD_BOARD = usb_dfu.cfg
 
+ifdef SR_BOOTLOADER_VID
+ifdef SR_BOOTLOADER_PID
+ifdef SR_BOOTLOADER_REV
+IDNUMSAREGOOD=1
+endif
+endif
+endif
+
+ifndef IDNUMSAREGOOD
+$(error You must export the VID/PID/REV for the bootloader to this make enviroment)
+endif
+
 CFLAGS += -mcpu=cortex-m3 -mthumb -msoft-float -DSTM32F1 \
 	  -Wall -Wextra -Os -std=gnu99 -g -fno-common \
-	  -Ilibopencm3/include
+	  -Ilibopencm3/include -DSR_BOOTLOADER_VID=$(SR_BOOTLOADER_VID) \
+	  -DSR_BOOTLOADER_PID=$(SR_BOOTLOADER_PID) \
+	  -DSR_BOOTLOADER_REV=$(SR_BOOTLOADER_REV)
 LDFLAGS += -lc -lm -Llibopencm3/lib \
 	   -Llibopencm3/lib/stm32/f1 -lnosys -T$(LDSCRIPT) \
 	   -nostartfiles -Wl,--gc-sections,-Map=dfu.map -mcpu=cortex-m3 \
