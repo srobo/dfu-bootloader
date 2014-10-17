@@ -60,6 +60,9 @@ void re_enter_bootloader()
 	do_bootloader();
 }
 
+uint32_t reenter_bootloader_addr __attribute__((section(".reentry")))
+	= (uint32_t)&re_enter_bootloader;
+
 /* Expect outside environment to have built and linked in a force_bootloader
  * function. This means this bootloader is not device independent. This is a
  * feature. */

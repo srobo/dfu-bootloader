@@ -54,6 +54,10 @@ MEMORY
 /* Enforce emmition of the vector table. */
 EXTERN (vector_table)
 
+/* Force re-entry symbol to be kept */
+
+EXTERN (reenter_bootloader_addr)
+
 /* Define the entry point of the output file. */
 ENTRY(reset_handler)
 
@@ -115,7 +119,12 @@ SECTIONS
 	 */
 	/DISCARD/ : { *(.eh_frame) }
 
-	. = ALIGN(0x2000); /* Pad up to 0x2000*/
+	/* Finally, dump a re-enter bootloader pointer at the end of mem */
+	.text : {
+		. = 0x1FFC;
+		*(.reentry*)
+	} >rom
+
 	end = .;
 }
 
