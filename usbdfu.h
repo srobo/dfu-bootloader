@@ -9,5 +9,3 @@ int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *req,
 	uint8_t **buf, uint16_t *len,
 	void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req));
 void usbdfu_sanitise();
-void disable_dfu_iface(void);
-void enable_dfu_iface(void);
