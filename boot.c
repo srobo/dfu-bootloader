@@ -16,26 +16,12 @@ static void set_config_cb(usbd_device *usbd_dev, uint16_t wValue)
                                 usbdfu_control_request);
 }
 
-/* Expect outside environment to have built and linked in a force_bootloader
- * function. This means this bootloader is not device independent. This is a
- * feature. */
-extern bool force_bootloader();
 
-int main(void)
+void do_bootloader()
 {
 	usbd_device *usbd_dev;
 
 	rcc_periph_clock_enable(RCC_GPIOA);
-
-	if (!force_bootloader()) {
-		/* XXX jmorse: skip configuring the stack location. It doesn't
-		 * harm us to have the remains of the bootloader at thet top.
-		 * Keep the configuration of the interrupt vectors though */
-		/* Set vector table base address. */
-		SCB_VTOR = *(volatile uint32_t*)APP_ADDRESS;
-		/* Jump to application. */
-		(*(void (**)())(APP_ADDRESS + 4))();
-	}
 
 	rcc_clock_setup_in_hsi_out_48mhz();
 
@@ -51,4 +37,25 @@ int main(void)
 
 	while (1)
 		usbd_poll(usbd_dev);
+}
+
+/* Expect outside environment to have built and linked in a force_bootloader
+ * function. This means this bootloader is not device independent. This is a
+ * feature. */
+extern bool force_bootloader();
+
+int main(void)
+{
+
+	if (!force_bootloader()) {
+		/* XXX jmorse: skip configuring the stack location. It doesn't
+		 * harm us to have the remains of the bootloader at thet top.
+		 * Keep the configuration of the interrupt vectors though */
+		/* Set vector table base address. */
+		SCB_VTOR = *(volatile uint32_t*)APP_ADDRESS;
+		/* Jump to application. */
+		(*(void (**)())(APP_ADDRESS + 4))();
+	}
+
+	do_bootloader();
 }
