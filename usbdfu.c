@@ -37,6 +37,8 @@ uint8_t usbdfu_control_buffer[1024];
 
 static enum dfu_state usbdfu_state = STATE_DFU_IDLE;
 
+static bool disable_dfu = false;
+
 static struct {
 	uint8_t buf[sizeof(usbdfu_control_buffer)];
 	uint16_t len;
@@ -165,6 +167,10 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
 int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, uint8_t **buf,
 		uint16_t *len, void (**complete)(usbd_device *usbd_dev, struct usb_setup_data *req))
 {
+	// If we're disabled (aka, interface not selected) ignore all reqs
+	if (disable_dfu)
+		return USBD_REQ_NEXT_CALLBACK;
+
 	if ((req->bmRequestType & 0x7F) != 0x21)
 		return 0; /* Only accept class request. */
 
@@ -220,5 +226,16 @@ void usbdfu_sanitise()
 	// init variables in .data; For whatever reason they're not getting
 	// initialized correctly?
 	usbdfu_state = STATE_DFU_IDLE;
+	disable_dfu = false;
 	return;
+}
+
+void enable_dfu_iface()
+{
+	disable_dfu = false;
+}
+
+void disable_dfu_iface()
+{
+	disable_dfu = true;
 }
