@@ -32,6 +32,10 @@
                           __asm__("nop"); \
                     } while(0)
 
+#if !defined(SR_BOOTLOADER_VID) || !defined(SR_BOOTLOADER_PID) || !defined(SR_BOOTLOADER_REV)
+#error You must provide USB VID/PID/REV for this bootloader to report
+#endif
+
 /* We need a special large control buffer for this device: */
 uint8_t usbdfu_control_buffer[1024];
 
@@ -52,9 +56,9 @@ const struct usb_device_descriptor usbdfu_dev = {
 	.bDeviceSubClass = 0,
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize0 = 64,
-	.idVendor = 0x0483,
-	.idProduct = 0xDF11,
-	.bcdDevice = 0x0200,
+	.idVendor = SR_BOOTLOADER_VID,
+	.idProduct = SR_BOOTLOADER_PID,
+	.bcdDevice = SR_BOOTLOADER_REV,
 	.iManufacturer = 1,
 	.iProduct = 2,
 	.iSerialNumber = 3,
