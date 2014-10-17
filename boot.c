@@ -39,6 +39,8 @@ void do_bootloader()
 		usbd_poll(usbd_dev);
 }
 
+extern void* vector_table;
+
 void re_enter_bootloader()
 {
 	// This entire thing is every so slightly dodgy. We can trust:
@@ -56,6 +58,7 @@ void re_enter_bootloader()
 	// However: the USB driver code is always (apparently) overwritten and
 	// initialized by libopencm3. And in the worst case, the rcc vars are
 	// not static.
+	SCB_VTOR = (uint32_t)vector_table;
 	usbdfu_sanitise();
 	do_bootloader();
 }
