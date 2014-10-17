@@ -88,7 +88,7 @@ const struct usb_interface_descriptor iface = {
 	.extralen = sizeof(dfu_function),
 };
 
-const struct usb_interface ifaces[] = {{
+const struct usb_interface const ifaces[] = {{
 	.num_altsetting = 1,
 	.altsetting = &iface,
 }};
@@ -106,7 +106,7 @@ const struct usb_config_descriptor usbdfu_config = {
 	.interface = ifaces,
 };
 
-const char *usbdfu_strings[] = {
+const char * const usbdfu_strings[] = {
 	"Black Sphere Technologies",
 	"DFU Demo",
 	"DEMO",
@@ -228,4 +228,12 @@ int usbdfu_control_request(usbd_device *usbd_dev, struct usb_setup_data *req, ui
 	}
 
 	return 0;
+}
+
+void usbdfu_sanitise()
+{
+	// init variables in .data; For whatever reason they're not getting
+	// initialized correctly?
+	usbdfu_state = STATE_DFU_IDLE;
+	return;
 }

@@ -47,6 +47,8 @@ int main(void)
 	usbd_register_set_config_callback(usbd_dev, set_config_cb);
 	gpio_set(GPIOA, GPIO8);
 
+	usbdfu_sanitise();
+
 	while (1)
 		usbd_poll(usbd_dev);
 }
