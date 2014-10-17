@@ -91,19 +91,6 @@ SECTIONS
 		__fini_array_end = .;
 	} >rom
 
-	/*
-	 * Another section used by C++ stuff, appears when using newlib with
-	 * 64bit (long long) printf support
-	 */
-	.ARM.extab : {
-		*(.ARM.extab*)
-	} >rom
-	.ARM.exidx : {
-		__exidx_start = .;
-		*(.ARM.exidx*)
-		__exidx_end = .;
-	} >rom
-
 	. = ALIGN(4);
 	_etext = .;
 
