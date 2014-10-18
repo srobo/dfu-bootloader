@@ -1,6 +1,7 @@
 #include <libopencm3/usb/usbd.h>
 
 #define REENTER_BOOTLOADER_RENDEZVOUS	0x08001FFC
+#define SERIALNUM_BOOTLOADER_LOC	0x08001FE0
 
 extern uint8_t usbdfu_control_buffer[1024];
 extern const struct usb_device_descriptor usbdfu_dev;

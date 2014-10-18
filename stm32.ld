@@ -121,6 +121,8 @@ SECTIONS
 
 	/* Finally, dump a re-enter bootloader pointer at the end of mem */
 	.text : {
+		. = 0x1FE0;
+		*(.sernum*)
 		. = 0x1FFC;
 		*(.reentry*)
 	} >rom
