@@ -111,9 +111,9 @@ const struct usb_config_descriptor usbdfu_config = {
 };
 
 const char * const usbdfu_strings[] = {
-	"Black Sphere Technologies",
-	"DFU Demo",
-	"DEMO",
+	"Student Robotics",
+	"Bootloader firmware",
+	"XXXXXXXXXXXXXXXX",
 	/* This string is used by ST Microelectronics' DfuSe utility. */
 	"uwotm8",
 };
