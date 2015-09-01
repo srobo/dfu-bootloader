@@ -1,6 +1,7 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/cm3/scb.h>
+#include <libopencm3/stm32/iwdg.h>
 
 #include "usbdfu.h"
 
@@ -35,8 +36,10 @@ void do_bootloader()
 
 	usbdfu_sanitise();
 
-	while (1)
+	while (1) {
+		iwdg_reset();
 		usbd_poll(usbd_dev);
+	}
 }
 
 extern void* vector_table;
