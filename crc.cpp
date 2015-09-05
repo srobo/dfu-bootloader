@@ -1,9 +1,12 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <arpa/inet.h>
 
 #include <boost/crc.hpp>
 
@@ -55,6 +58,18 @@ main(int argc, char * const*argv)
 	if (fread(data, fstat.st_size, 1, foo) != 1) {
 		fprintf(stderr, "Could not read whole input file\n");
 		exit(1);
+	}
+
+	// Flip all 32 bit words. Really.
+	{
+		uint32_t *ptr = (uint32_t*)data;
+		unsigned long count = fstat.st_size / 4;
+		assert((fstat.st_size % 4) == 0);
+
+		for (unsigned long i = 0; i < count; i++)
+			// XXX: baked in assumption that this'll actually swap
+			// bytes around.
+			ptr[i] = htonl(ptr[i]);
 	}
 
 	boost::crc_basic<32> crc32(0x04C11DB7, 0xFFFFFFFF, 0, false, false);
