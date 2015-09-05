@@ -23,6 +23,7 @@
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/dfu.h>
+#include <libopencm3/stm32/iwdg.h>
 
 /* Commands sent with wBlockNum == 0 as per ST implementation. */
 #define CMD_SETADDR	0x21
@@ -153,6 +154,10 @@ static void usbdfu_getstatus_complete(usbd_device *usbd_dev, struct usb_setup_da
 		for (i = 0; i < prog.len; i += 2) {
 			uint16_t *dat = (uint16_t *)(prog.buf + i);
 			flash_program_half_word(baseaddr + i, *dat);
+
+			// jmorse: FUN FACT: flashing takes a long time.
+			iwdg_reset();
+
 		}
 		flash_lock();
 
