@@ -1,3 +1,5 @@
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -5,27 +7,40 @@
 
 #include <boost/crc.hpp>
 
+void
+usage()
+{
+	fprintf(stderr, "Usage: crctool [-k] filename\n");
+	exit(1);
+}
+
 int
-main(int argc, const char **argv)
+main(int argc, char * const*argv)
 {
 	struct stat fstat;
-	int ret;
 	FILE *foo;
 	void *data;
+	uint32_t result;
+	int ret;
+	bool write = false;
 	
-	if (argc != 2) {
-		fprintf(stderr, "Usage: crc filename\n");
-		exit(1);
-	}
+	ret = getopt(argc, argv, "w");
+	if (ret == '?')
+		usage();
+	else if (ret == 'w')
+		write = true;
 
-	ret = stat(argv[1], &fstat);
+	if (optind != argc - 1)
+		usage();
+
+	ret = stat(argv[optind], &fstat);
 	if (ret < 0) {
-		fprintf(stderr, "Could not stat %s", argv[1]);
+		fprintf(stderr, "Could not stat %s", argv[optind]);
 		perror("");
 		exit(1);
 	}
 
-	foo = fopen(argv[1], "rb");
+	foo = fopen(argv[optind], "r+b");
 	if (foo == NULL) {
 		perror("Could not open input file");
 		exit(1);
@@ -42,12 +57,18 @@ main(int argc, const char **argv)
 		exit(1);
 	}
 
-	fclose(foo);
-
 	boost::crc_basic<32> crc32(0x04C11DB7, 0xFFFFFFFF, 0, false, false);
 	crc32.process_bytes(data, fstat.st_size);
-	printf("%X\n", crc32.checksum());
-
+	result = crc32.checksum();
 	free(data);
+
+	if (write) {
+		fseek(foo, 8, SEEK_SET);
+		fwrite(&result, sizeof(result), 1, foo);
+	} else {
+		printf("%X\n", result);
+	}
+
+	fclose(foo);
 	return 0;
 }
