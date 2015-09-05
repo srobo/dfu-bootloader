@@ -83,8 +83,7 @@ verify_firmware()
 
 	// Reset CRC calculation
 	crc_reset();
-	crc_calculate(*image_addr);
-	crc_reset();
+
 	// Accumulate VTOR and entry addr
 	crc_calculate_block(image_addr, 2);
 	image_size -= 8;
