@@ -6,6 +6,8 @@ GDB = $(PREFIX)-gdb
 OBJCOPY = $(PREFIX)-objcopy
 STRIP = $(PREFIX)-strip
 OOCD = openocd
+HOSTCC = gcc
+HOSTCXX = g++
 
 LDSCRIPT = stm32.ld
 OOCD_BOARD = usb_dfu.cfg
@@ -37,7 +39,7 @@ LDFLAGS += -lc -lm -Llibopencm3/lib \
 
 O_FILES = usbdfu.o boot.o
 
-all: usb_dfu_blob.o usb_dfu.bin
+all: usb_dfu_blob.o usb_dfu.bin crctool
 
 include depend
 
@@ -54,6 +56,9 @@ usb_dfu.elf: $(O_FILES) $(LD_SCRIPT)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
+
+crctool: crc.cpp
+	$(HOSTCXX) $< -o $@
 
 depend: *.c
 	rm -f depend
@@ -78,4 +83,4 @@ debug: usb_dfu.elf
 	$(GDB)  $^ -ex "target remote localhost:3333" -ex "mon reset halt" && killall openocd
 
 clean:
-	-rm -f usb_dfu.elf depend *.o *.map
+	-rm -f usb_dfu.elf depend *.o *.map crctool
