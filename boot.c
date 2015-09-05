@@ -1,5 +1,6 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/f1/crc.h>
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/stm32/iwdg.h>
 
@@ -66,6 +67,44 @@ void re_enter_bootloader()
 	do_bootloader();
 }
 
+bool
+verify_firmware()
+{
+
+	// To work out how far we should read memory, we need the build
+	// environment to tell us how much memory there is on this IC. While
+	// all our boards are using F1s, they /might/ not all be 103's.
+	unsigned int image_size = SR_BOOTLOADER_FLASHSIZE;
+	uint32_t *image_addr = (uint32_t*)APP_ADDRESS;
+	image_size -= 0x2000; // Size of bootloader itself
+
+	// Un-gate CRC unit
+	rcc_peripheral_enable_clock(&RCC_AHBENR, RCC_AHBENR_CRCEN);
+
+	// Reset CRC calculation
+	crc_reset();
+	crc_calculate(*image_addr);
+	crc_reset();
+	// Accumulate VTOR and entry addr
+	crc_calculate_block(image_addr, 2);
+	image_size -= 8;
+	image_addr += 2; // Two uint32_t's
+
+	// Accumulate zero for the CRC32 position
+	crc_calculate(0);
+	image_size -= 4;
+	// Load the baked-in crc value
+	uint32_t flashcrc = *image_addr;
+	image_addr += 1; // One uint32_t
+
+	// Accumulate the rest of the flash image. 2nd argument is the number
+	// of 32 bit words to crc over
+	uint32_t thecrc = crc_calculate_block(image_addr, image_size / 4);
+
+	// Result is whether the CRC matches.
+	return flashcrc == thecrc;
+}
+
 uint32_t reenter_bootloader_addr __attribute__((section(".reentry")))
 	= (uint32_t)&re_enter_bootloader;
 
@@ -77,7 +116,7 @@ extern bool force_bootloader();
 int main(void)
 {
 
-	if (!force_bootloader()) {
+	if (!force_bootloader() && verify_firmware()) {
 		/* XXX jmorse: skip configuring the stack location. It doesn't
 		 * harm us to have the remains of the bootloader at thet top.
 		 * Keep the configuration of the interrupt vectors though */
