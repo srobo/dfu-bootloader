@@ -9,6 +9,9 @@ OOCD = openocd
 HOSTCC = gcc
 HOSTCXX = g++
 
+# Directory containing include/ and lib/ subdirectories of libopencm3 installation.
+LIBOPENCM3 ?= libopencm3
+
 LDSCRIPT = stm32.ld
 OOCD_BOARD = usb_dfu.cfg
 
@@ -28,12 +31,12 @@ endif
 
 CFLAGS += -mcpu=cortex-m3 -mthumb -msoft-float -DSTM32F1 \
 	  -Wall -Wextra -Os -std=gnu99 -g -fno-common \
-	  -Ilibopencm3/include -DSR_BOOTLOADER_VID=$(SR_BOOTLOADER_VID) \
+	  -I$(LIBOPENCM3)/include -DSR_BOOTLOADER_VID=$(SR_BOOTLOADER_VID) \
 	  -DSR_BOOTLOADER_PID=$(SR_BOOTLOADER_PID) \
 	  -DSR_BOOTLOADER_REV=$(SR_BOOTLOADER_REV) \
 	  -DSR_BOOTLOADER_FLASHSIZE=$(SR_BOOTLOADER_FLASHSIZE)
-LDFLAGS += -lc -lm -Llibopencm3/lib \
-	   -Llibopencm3/lib/stm32/f1 -lnosys -T$(LDSCRIPT) \
+LDFLAGS += -lc -lm -L$(LIBOPENCM3)/lib \
+	   -L$(LIBOPENCM3)/lib/stm32/f1 -lnosys -T$(LDSCRIPT) \
 	   -nostartfiles -Wl,--gc-sections,-Map=dfu.map -mcpu=cortex-m3 \
 	   -mthumb -march=armv7-m -mfix-cortex-m3-ldrd -msoft-float
 
