@@ -26,12 +26,18 @@ main(int argc, char * const*argv)
 	uint32_t result;
 	int ret;
 	bool write = false;
-	
-	ret = getopt(argc, argv, "w");
-	if (ret == '?')
-		usage();
-	else if (ret == 'w')
-		write = true;
+
+	do {
+		ret = getopt(argc, argv, "w");
+		switch (ret) {
+		case '?':
+			usage();
+			break;
+		case 'w':
+			write = true;
+			break;
+		}
+	} while (ret != -1);
 
 	if (optind != argc - 1)
 		usage();
