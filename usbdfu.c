@@ -117,8 +117,10 @@ const char * const usbdfu_strings[] = {
 	"Student Robotics",
 	"Bootloader firmware",
 	serialnum,
-	/* This string is used by ST Microelectronics' DfuSe utility. */
-	"uwotm8",
+	/* This string is used by ST Microelectronics' DfuSe utility.
+	 * See ST Microelectronics document UM0424, section 4.3.2 for details on the
+	 * format of this string. */
+	"@Flash/0x08000000/8*1Ka,24*1Kg",
 };
 
 static uint8_t usbdfu_getstatus(usbd_device *usbd_dev, uint32_t *bwPollTimeout)
