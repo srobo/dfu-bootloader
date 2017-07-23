@@ -13,7 +13,7 @@
 void
 usage()
 {
-	fprintf(stderr, "Usage: crctool [-k] filename\n");
+	fprintf(stderr, "Usage: crctool [-w] filename\n");
 	exit(1);
 }
 
