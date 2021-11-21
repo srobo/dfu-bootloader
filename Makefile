@@ -48,7 +48,7 @@ include depend
 
 usb_dfu_blob.o: $(O_FILES) $(LD_SCRIPT) $(FORCE_BOOTLOADER_OBJ)
 	if test -z "$$FORCE_BOOTLOADER_OBJ"; then echo "No force_bootloader object provided in environment" 1>&2; exit 1; fi
-	$(LD) -o $@ $(O_FILES) $$FORCE_BOOTLOADER_OBJ $(LDFLAGS) -lopencm3_stm32f1 '-Wl,-e reset_handler'
+	$(LD) -r -o $@ $(O_FILES) $$FORCE_BOOTLOADER_OBJ $(LDFLAGS) -lopencm3_stm32f1 '-Wl,-e reset_handler'
 	$(OBJCOPY) --redefine-sym reset_handler=bootloader_entry $@
 	$(STRIP) -K bootloader_entry $@
 
