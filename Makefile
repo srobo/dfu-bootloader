@@ -6,8 +6,6 @@ GDB = $(PREFIX)-gdb
 OBJCOPY = $(PREFIX)-objcopy
 STRIP = $(PREFIX)-strip
 OOCD = openocd
-HOSTCC = gcc
-HOSTCXX = g++
 
 # Directory containing include/ and lib/ subdirectories of libopencm3 installation.
 LIBOPENCM3 ?= libopencm3
