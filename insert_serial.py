@@ -41,7 +41,7 @@ def ValidPath(val):
     ""
     f = Path(val)
     try:
-        if not f.parent.is_file():
+        if not f.parent.is_dir():
             raise argparse.ArgumentTypeError(f'Path does not exist {val}')
     except PermissionError as e:
         raise argparse.ArgumentTypeError(e)
