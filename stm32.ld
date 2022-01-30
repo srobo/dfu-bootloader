@@ -22,7 +22,8 @@
 /* Define memory regions. */
 MEMORY
 {
-	rom (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+	/* Restrict the bootloader to the first 8k of flash */
+	rom (rx) : ORIGIN = 0x08000000, LENGTH = 8K
 	ram (rwx) : ORIGIN = 0x20000000, LENGTH = 10K
 }
 
@@ -121,9 +122,9 @@ SECTIONS
 
 	/* Finally, dump a re-enter bootloader pointer at the end of mem */
 	.text : {
-		. = 0x1FE0;
+		. = ORIGIN(rom) + 0x1FE0;
 		*(.sernum*)
-		. = 0x1FFC;
+		. = ORIGIN(rom) + 0x1FFC;
 		*(.reentry*)
 	} >rom
 
