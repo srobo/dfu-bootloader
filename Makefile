@@ -6,8 +6,6 @@ GDB = $(PREFIX)-gdb
 OBJCOPY = $(PREFIX)-objcopy
 STRIP = $(PREFIX)-strip
 OOCD = openocd
-HOSTCC = gcc
-HOSTCXX = g++
 
 # Directory containing include/ and lib/ subdirectories of libopencm3 installation.
 LIBOPENCM3 ?= libopencm3
@@ -42,7 +40,7 @@ LDFLAGS += -lc -lm -L$(LIBOPENCM3)/lib \
 
 O_FILES = usbdfu.o boot.o
 
-all: usb_dfu_blob.o usb_dfu.bin crctool
+all: usb_dfu_blob.o usb_dfu.bin
 
 include depend
 
@@ -59,9 +57,6 @@ usb_dfu.elf: $(O_FILES) $(LD_SCRIPT)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
-
-crctool: crc.cpp
-	$(HOSTCXX) $< -o $@
 
 depend: *.c
 	rm -f depend
