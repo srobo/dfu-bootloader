@@ -26,7 +26,10 @@ def insert_bin_serial(data, serial_num, addr):
 
 
 def ExistingFile(val):
-    ""
+    """ To be used as an argparse argument type
+        Tests the file exists without opening it to avoid issues with files
+        not being closed: https://bugs.python.org/issue13824
+    """
     f = Path(val)
     try:
         if not f.is_file():
@@ -38,7 +41,10 @@ def ExistingFile(val):
 
 
 def ValidPath(val):
-    ""
+    """ To be used as an argparse argument type
+        Tests the filepath exists without creating it to avoid issues with
+        files not being closed: https://bugs.python.org/issue13824
+    """
     f = Path(val)
     try:
         if not f.parent.is_dir():
