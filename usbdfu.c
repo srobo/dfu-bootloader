@@ -114,7 +114,7 @@ const struct usb_config_descriptor usbdfu_config = {
 const char serialnum[] __attribute__((section(".sernum"))) = "XXXXXXXXXXXXXXX";
 
 const char * const usbdfu_strings[] = {
-	"Student Robotics",
+	"University of Southampton",
 	"Bootloader firmware",
 	serialnum,
 	/* This string is used by ST Microelectronics' DfuSe utility. */
