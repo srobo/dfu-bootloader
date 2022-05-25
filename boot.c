@@ -10,7 +10,7 @@
 
 static void set_config_cb(usbd_device *usbd_dev, uint16_t wValue)
 {
-
+    (void)wValue;
         usbd_register_control_callback(
                                 usbd_dev,
                                 USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
@@ -25,13 +25,13 @@ void do_bootloader()
 
 	rcc_periph_clock_enable(RCC_GPIOA);
 
-	rcc_clock_setup_in_hsi_out_48mhz();
+	rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
 
 	gpio_clear(GPIOA, GPIO8);
 	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
 		      GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
 
-	usbd_dev = usbd_init(&stm32f103_usb_driver, &usbdfu_dev, &usbdfu_config, usbdfu_strings, 4, usbdfu_control_buffer, sizeof(usbdfu_control_buffer));
+	usbd_dev = usbd_init(&stm32f107_usb_driver, &usbdfu_dev, &usbdfu_config, usbdfu_strings, 4, usbdfu_control_buffer, sizeof(usbdfu_control_buffer));
 	usbd_register_set_config_callback(usbd_dev, set_config_cb);
 	gpio_set(GPIOA, GPIO8);
 
